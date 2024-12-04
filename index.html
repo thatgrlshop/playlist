@@ -3,123 +3,136 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mood Playlist Widget</title>
+  <title>Spotify Mood Playlist</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
       background-color: #f9f9f9;
       color: #333;
+      margin: 0;
+      padding: 20px;
     }
-    h1 {
-      text-align: center;
-    }
-    .playlist-grid {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 20px;
-      max-width: 600px;
-      margin: 0 auto;
+      justify-items: center;
     }
-    .playlist-item {
+    .playlist {
       text-align: center;
-      cursor: pointer;
       position: relative;
+      cursor: pointer;
     }
-    .playlist-item img {
-      width: 100%;
+    .playlist img {
+      width: 150px;
+      height: 150px;
       border-radius: 10px;
       object-fit: cover;
-      height: 150px;
-    }
-    .playlist-item .add-playlist {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: rgba(0, 0, 0, 0.5);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      display: none;
-      cursor: pointer;
-    }
-    .playlist-item:hover .add-playlist {
-      display: block;
     }
     .playlist-title {
       margin-top: 10px;
       font-size: 14px;
     }
+    .add-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+      font-size: 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+    .playlist:hover .add-button {
+      display: block;
+    }
+    input[type="text"] {
+      width: 90%;
+      padding: 5px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <h1>Mood Playlist</h1>
-  <div class="playlist-grid">
-    <!-- Placeholder for custom playlists -->
-    <div class="playlist-item" id="custom1">
-      <img src="https://i.ibb.co/qMkwzbz/IMG-1838.png" alt="Add Playlist">
-      <button class="add-playlist">Add your playlist</button>
-      <div class="playlist-title">Custom Playlist 1</div>
+  <h1>Spotify Mood Playlist</h1>
+  <div class="grid" id="playlist-grid">
+    <!-- Example playlists -->
+    <div class="playlist" data-placeholder>
+      <img src="https://via.placeholder.com/150" alt="Add playlist">
+      <button class="add-button">Add Your Playlist</button>
     </div>
-    <div class="playlist-item" id="custom2">
-      <img src="https://i.ibb.co/qMkwzbz/IMG-1838.png" alt="Add Playlist">
-      <button class="add-playlist">Add your playlist</button>
-      <div class="playlist-title">Custom Playlist 2</div>
+    <div class="playlist" data-placeholder>
+      <img src="https://via.placeholder.com/150" alt="Add playlist">
+      <button class="add-button">Add Your Playlist</button>
     </div>
+    <div class="playlist" data-url="https://open.spotify.com/playlist/37i9dQZF1DX4JAvHpjipBk">
+      <img src="https://i.scdn.co/image/ab67706c0000bebb7cd6aab5054419e2f107d94c" alt="Relaxing Vibes">
+      <div class="playlist-title">Relaxing Vibes</div>
+    </div>
+    <div class="playlist" data-url="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M">
+      <img src="https://i.scdn.co/image/ab67706c0000bebb5d8f9c529f91732d1b30e89e" alt="Top Hits">
+      <div class="playlist-title">Top Hits</div>
+    </div>
+  </div>
 
-    <!-- Predefined playlists -->
-    <div class="playlist-item" data-url="https://open.spotify.com/playlist/37i9dQZF1DXebxttQCq0zA?si=X_d9EQI9TLKnarYr7oEiHg&pi=e-fAgbTro-Rwqx">
-      <img src="https://i.ibb.co/qMkwzbz/IMG-1838.png" alt="Relax">
-      <div class="playlist-title">Relax</div>
-    </div>
-    <div class="playlist-item" data-url="https://open.spotify.com/playlist/37i9dQZF1DXebxttQCq0zA?si=X_d9EQI9TLKnarYr7oEiHg&pi=e-fAgbTro-Rwqx">
-      <img src="https://i.ibb.co/qMkwzbz/IMG-1838.png" alt="Workout">
-      <div class="playlist-title">Workout</div>
-    </div>
-    <!-- Add more predefined playlists as needed -->
+  <!-- Input form for custom playlists -->
+  <div id="add-playlist-form" style="display: none;">
+    <h2>Add a New Playlist</h2>
+    <input type="text" id="playlist-url" placeholder="Paste Spotify Playlist Link">
+    <input type="text" id="playlist-title" placeholder="Enter Playlist Title">
+    <button id="save-playlist">Save</button>
   </div>
 
   <script>
-    // Predefined playlist click
-    document.querySelectorAll('.playlist-item[data-url]').forEach(item => {
-      item.addEventListener('click', () => {
-        const url = item.getAttribute('data-url');
-        window.open(url, '_blank');
-      });
+    const grid = document.getElementById("playlist-grid");
+    const addForm = document.getElementById("add-playlist-form");
+    const playlistUrlInput = document.getElementById("playlist-url");
+    const playlistTitleInput = document.getElementById("playlist-title");
+    const saveButton = document.getElementById("save-playlist");
+
+    let activePlaceholder;
+
+    grid.addEventListener("click", (e) => {
+      const target = e.target.closest(".playlist");
+      if (target && target.hasAttribute("data-placeholder")) {
+        activePlaceholder = target;
+        addForm.style.display = "block";
+      } else if (target && target.dataset.url) {
+        window.open(target.dataset.url, "_blank");
+      }
     });
 
-    // Custom playlist logic
-    function handleCustomPlaylist(id) {
-      const playlistItem = document.getElementById(id);
-      const button = playlistItem.querySelector('.add-playlist');
-      const img = playlistItem.querySelector('img');
-      const titleDiv = playlistItem.querySelector('.playlist-title');
-
-      button.addEventListener('click', () => {
-        const playlistUrl = prompt('Enter your Spotify playlist URL:');
-        const playlistTitle = prompt('Enter a title for your playlist:');
-        if (playlistUrl && playlistTitle) {
-          img.src = `https://via.placeholder.com/150?text=${encodeURIComponent(playlistTitle)}`;
-          titleDiv.textContent = playlistTitle;
-          localStorage.setItem(id, JSON.stringify({ url: playlistUrl, title: playlistTitle }));
-        }
-      });
-
-      // Load saved playlist
-      const savedPlaylist = JSON.parse(localStorage.getItem(id));
-      if (savedPlaylist) {
-        img.src = `https://via.placeholder.com/150?text=${encodeURIComponent(savedPlaylist.title)}`;
-        titleDiv.textContent = savedPlaylist.title;
-        playlistItem.setAttribute('data-url', savedPlaylist.url);
-        button.style.display = 'none';
+    saveButton.addEventListener("click", () => {
+      const playlistUrl = playlistUrlInput.value.trim();
+      const playlistTitle = playlistTitleInput.value.trim();
+      if (!playlistUrl || !playlistTitle) {
+        alert("Please enter both a playlist link and a title!");
+        return;
       }
-    }
 
-    // Initialize custom playlists
-    handleCustomPlaylist('custom1');
-    handleCustomPlaylist('custom2');
+      const playlistId = playlistUrl.split("/playlist/")[1]?.split("?")[0];
+      if (!playlistId) {
+        alert("Invalid Spotify playlist link!");
+        return;
+      }
+
+      const imageUrl = `https://i.scdn.co/image/${playlistId}`;
+      activePlaceholder.innerHTML = `
+        <img src="${imageUrl}" alt="${playlistTitle}">
+        <div class="playlist-title">${playlistTitle}</div>
+      `;
+      activePlaceholder.dataset.url = playlistUrl;
+      addForm.style.display = "none";
+      playlistUrlInput.value = "";
+      playlistTitleInput.value = "";
+    });
   </script>
 </body>
 </html>
