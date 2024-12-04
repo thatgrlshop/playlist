@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Playlist Widget</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+    }
+    .playlist-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .playlist-item {
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+    .playlist-item img {
+      width: 100%;
+      border-radius: 10px;
+      object-fit: cover;
+      height: 150px;
+    }
+    .playlist-item .add-playlist {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      display: none;
+      cursor: pointer;
+    }
+    .playlist-item:hover .add-playlist {
+      display: block;
+    }
+    .playlist-title {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mood Playlist</h1>
+  <div class="playlist-grid">
+    <!-- Placeholder for custom playlists -->
+    <div class="playlist-item" id="custom1">
+      <img src="https://via.placeholder.com/150?text=Add+Playlist" alt="Add Playlist">
+      <button class="add-playlist">Add your playlist</button>
+      <div class="playlist-title">Custom Playlist 1</div>
+    </div>
+    <div class="playlist-item" id="custom2">
+      <img src="https://via.placeholder.com/150?text=Add+Playlist" alt="Add Playlist">
+      <button class="add-playlist">Add your playlist</button>
+      <div class="playlist-title">Custom Playlist 2</div>
+    </div>
+
+    <!-- Predefined playlists -->
+    <div class="playlist-item" data-url="https://open.spotify.com/playlist/37i9dQZF1DXebxttQCq0zA?si=X_d9EQI9TLKnarYr7oEiHg&pi=e-fAgbTro-Rwqx">
+      <img src="https://via.placeholder.com/150?text=Relax" alt="Relax">
+      <div class="playlist-title">Relax</div>
+    </div>
+    <div class="playlist-item" data-url="https://open.spotify.com/playlist/37i9dQZF1DXebxttQCq0zA?si=X_d9EQI9TLKnarYr7oEiHg&pi=e-fAgbTro-Rwqx">
+      <img src="https://via.placeholder.com/150?text=Workout" alt="Workout">
+      <div class="playlist-title">Workout</div>
+    </div>
+    <!-- Add more predefined playlists as needed -->
+  </div>
+
+  <script>
+    // Predefined playlist click
+    document.querySelectorAll('.playlist-item[data-url]').forEach(item => {
+      item.addEventListener('click', () => {
+        const url = item.getAttribute('data-url');
+        window.open(url, '_blank');
+      });
+    });
+
+    // Custom playlist logic
+    function handleCustomPlaylist(id) {
+      const playlistItem = document.getElementById(id);
+      const button = playlistItem.querySelector('.add-playlist');
+      const img = playlistItem.querySelector('img');
+      const titleDiv = playlistItem.querySelector('.playlist-title');
+
+      button.addEventListener('click', () => {
+        const playlistUrl = prompt('Enter your Spotify playlist URL:');
+        const playlistTitle = prompt('Enter a title for your playlist:');
+        if (playlistUrl && playlistTitle) {
+          img.src = `https://via.placeholder.com/150?text=${encodeURIComponent(playlistTitle)}`;
+          titleDiv.textContent = playlistTitle;
+          localStorage.setItem(id, JSON.stringify({ url: playlistUrl, title: playlistTitle }));
+        }
+      });
+
+      // Load saved playlist
+      const savedPlaylist = JSON.parse(localStorage.getItem(id));
+      if (savedPlaylist) {
+        img.src = `https://via.placeholder.com/150?text=${encodeURIComponent(savedPlaylist.title)}`;
+        titleDiv.textContent = savedPlaylist.title;
+        playlistItem.setAttribute('data-url', savedPlaylist.url);
+        button.style.display = 'none';
+      }
+    }
+
+    // Initialize custom playlists
+    handleCustomPlaylist('custom1');
+    handleCustomPlaylist('custom2');
+  </script>
+</body>
+</html>
