@@ -21,7 +21,7 @@
       align-items: center;
       margin-bottom: 20px;
     }
-    .add-playlist-btn {
+    .edit-mode-btn {
       padding: 10px 20px;
       background-color: #A17E89;
       color: white;
@@ -29,7 +29,7 @@
       border-radius: 5px;
       cursor: pointer;
     }
-    .add-playlist-btn:hover {
+    .edit-mode-btn:hover {
       background-color: #8c6375;
     }
     .grid {
@@ -41,6 +41,7 @@
     .playlist {
       text-align: center;
       position: relative;
+      cursor: pointer;
     }
     .playlist img {
       width: 150px;
@@ -53,10 +54,13 @@
       font-size: 14px;
     }
     .playlist-buttons {
-      display: flex;
+      display: none; /* Hidden by default */
       justify-content: center;
       margin-top: 10px;
       gap: 10px;
+    }
+    .playlist.edit-mode .playlist-buttons {
+      display: flex; /* Show buttons in edit mode */
     }
     button {
       padding: 5px 10px;
@@ -88,11 +92,10 @@
 <body>
   <div class="header">
     <h1>Spotify Mood Playlist</h1>
-    <button class="add-playlist-btn" id="add-playlist-button">Add Playlist</button>
+    <button class="edit-mode-btn" id="edit-mode-button">Edit Mode</button>
   </div>
   <div class="grid" id="playlist-grid">
     <!-- Placeholder for custom playlists -->
-    <!-- Custom playlists will load dynamically -->
   </div>
 
   <!-- Add/Edit Playlist Form -->
@@ -111,11 +114,11 @@
     const playlistTitleInput = document.getElementById("playlist-title");
     const playlistImageInput = document.getElementById("playlist-image");
     const saveButton = document.getElementById("save-playlist");
-    const addPlaylistButton = document.getElementById("add-playlist-button");
+    const editModeButton = document.getElementById("edit-mode-button");
     let activePlaylistIndex = null;
     const maxPlaylists = 10;
+    let editMode = false; // Tracks if edit mode is active
 
-    // Load custom playlists from localStorage
     const savedPlaylists = JSON.parse(localStorage.getItem("customPlaylists")) || [];
 
     function loadCustomPlaylists() {
@@ -123,6 +126,7 @@
       savedPlaylists.forEach((playlist, index) => {
         const playlistDiv = document.createElement("div");
         playlistDiv.classList.add("playlist");
+        playlistDiv.setAttribute("data-url", playlist.url);
         playlistDiv.innerHTML = `
           <img src="${playlist.image}" alt="${playlist.title}">
           <div class="playlist-title">${playlist.title}</div>
@@ -131,20 +135,23 @@
             <button onclick="deletePlaylist(${index})">Delete</button>
           </div>
         `;
+        playlistDiv.addEventListener("click", (e) => {
+          if (!editMode) {
+            window.open(playlist.url, "_blank");
+          }
+        });
         grid.appendChild(playlistDiv);
       });
 
       if (savedPlaylists.length < maxPlaylists) {
-        // Add a placeholder if less than max playlists
         const placeholder = document.createElement("div");
         placeholder.classList.add("playlist");
         placeholder.innerHTML = `
           <img src="https://via.placeholder.com/150" alt="Add playlist">
-          <button class="add-button">Add Your Playlist</button>
           <div class="playlist-title">Add Your Playlist</div>
         `;
         placeholder.addEventListener("click", () => {
-          activePlaylistIndex = null; // New playlist
+          activePlaylistIndex = null;
           showAddForm();
         });
         grid.appendChild(placeholder);
@@ -180,10 +187,8 @@
         };
 
         if (activePlaylistIndex !== null) {
-          // Edit existing playlist
           savedPlaylists[activePlaylistIndex] = newPlaylist;
         } else if (savedPlaylists.length < maxPlaylists) {
-          // Add new playlist
           savedPlaylists.push(newPlaylist);
         } else {
           alert("Maximum number of playlists reached!");
@@ -212,9 +217,16 @@
       loadCustomPlaylists();
     }
 
-    addPlaylistButton.addEventListener("click", () => {
-      activePlaylistIndex = null;
-      showAddForm();
+    editModeButton.addEventListener("click", () => {
+      editMode = !editMode; // Toggle edit mode
+      const playlists = document.querySelectorAll(".playlist");
+      playlists.forEach((playlist) => {
+        if (editMode) {
+          playlist.classList.add("edit-mode");
+        } else {
+          playlist.classList.remove("edit-mode");
+        }
+      });
     });
 
     loadCustomPlaylists();
