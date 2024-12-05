@@ -15,6 +15,23 @@
     h1 {
       text-align: center;
     }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .add-playlist-btn {
+      padding: 10px 20px;
+      background-color: #A17E89;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .add-playlist-btn:hover {
+      background-color: #8c6375;
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -35,22 +52,23 @@
       margin-top: 10px;
       font-size: 14px;
     }
-    .add-button {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 10px;
-      background-color: rgba(0, 0, 0, 0.6);
+    .playlist-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+      gap: 10px;
+    }
+    button {
+      padding: 5px 10px;
+      background-color: #A17E89;
       color: white;
-      font-size: 14px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      display: none;
+      font-size: 12px;
     }
-    .playlist:hover .add-button {
-      display: block;
+    button:hover {
+      background-color: #8c6375;
     }
     .form-container {
       display: none;
@@ -65,47 +83,21 @@
       border-radius: 5px;
       font-size: 14px;
     }
-    button {
-      padding: 10px 20px;
-      background-color: #A17E89;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #8c6375;
-    }
   </style>
 </head>
 <body>
-  <h1>Spotify Mood Playlist</h1>
+  <div class="header">
+    <h1>Spotify Mood Playlist</h1>
+    <button class="add-playlist-btn" id="add-playlist-button">Add Playlist</button>
+  </div>
   <div class="grid" id="playlist-grid">
     <!-- Placeholder for custom playlists -->
-    <div class="playlist" data-placeholder>
-      <img src="https://via.placeholder.com/150" alt="Add playlist">
-      <button class="add-button">Add Your Playlist</button>
-      <div class="playlist-title">Add Your Playlist</div>
-    </div>
-    <div class="playlist" data-placeholder>
-      <img src="https://via.placeholder.com/150" alt="Add playlist">
-      <button class="add-button">Add Your Playlist</button>
-      <div class="playlist-title">Add Your Playlist</div>
-    </div>
-    <!-- Predefined playlists -->
-    <div class="playlist" data-url="https://open.spotify.com/playlist/5m8hWoxPvKRFRW2Oer7RGA">
-      <img src="https://via.placeholder.com/150" alt="Relaxing Vibes">
-      <div class="playlist-title">Relaxing Vibes</div>
-    </div>
-    <div class="playlist" data-url="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M">
-      <img src="https://via.placeholder.com/150" alt="Top Hits">
-      <div class="playlist-title">Top Hits</div>
-    </div>
+    <!-- Custom playlists will load dynamically -->
   </div>
 
-  <!-- Add Playlist Form -->
+  <!-- Add/Edit Playlist Form -->
   <div class="form-container" id="add-playlist-form">
-    <h2>Add Your Playlist</h2>
+    <h2 id="form-title">Add Your Playlist</h2>
     <input type="text" id="playlist-url" placeholder="Paste Spotify Playlist Link">
     <input type="text" id="playlist-title" placeholder="Enter Playlist Title">
     <input type="file" id="playlist-image" accept="image/*">
@@ -119,46 +111,58 @@
     const playlistTitleInput = document.getElementById("playlist-title");
     const playlistImageInput = document.getElementById("playlist-image");
     const saveButton = document.getElementById("save-playlist");
-    let activePlaceholder;
+    const addPlaylistButton = document.getElementById("add-playlist-button");
+    let activePlaylistIndex = null;
+    const maxPlaylists = 10;
 
     // Load custom playlists from localStorage
     const savedPlaylists = JSON.parse(localStorage.getItem("customPlaylists")) || [];
 
     function loadCustomPlaylists() {
-      const placeholders = document.querySelectorAll(".playlist[data-placeholder]");
+      grid.innerHTML = ""; // Clear the grid
       savedPlaylists.forEach((playlist, index) => {
-        const placeholder = placeholders[index];
-        if (placeholder) {
-          placeholder.innerHTML = `
-            <img src="${playlist.image}" alt="${playlist.title}">
-            <div class="playlist-title">${playlist.title}</div>
-          `;
-          placeholder.removeAttribute("data-placeholder");
-          placeholder.setAttribute("data-url", playlist.url);
-        }
+        const playlistDiv = document.createElement("div");
+        playlistDiv.classList.add("playlist");
+        playlistDiv.innerHTML = `
+          <img src="${playlist.image}" alt="${playlist.title}">
+          <div class="playlist-title">${playlist.title}</div>
+          <div class="playlist-buttons">
+            <button onclick="editPlaylist(${index})">Edit</button>
+            <button onclick="deletePlaylist(${index})">Delete</button>
+          </div>
+        `;
+        grid.appendChild(playlistDiv);
       });
+
+      if (savedPlaylists.length < maxPlaylists) {
+        // Add a placeholder if less than max playlists
+        const placeholder = document.createElement("div");
+        placeholder.classList.add("playlist");
+        placeholder.innerHTML = `
+          <img src="https://via.placeholder.com/150" alt="Add playlist">
+          <button class="add-button">Add Your Playlist</button>
+          <div class="playlist-title">Add Your Playlist</div>
+        `;
+        placeholder.addEventListener("click", () => {
+          activePlaylistIndex = null; // New playlist
+          showAddForm();
+        });
+        grid.appendChild(placeholder);
+      }
     }
 
-    grid.addEventListener("click", (e) => {
-      const target = e.target.closest(".playlist");
-      if (target && target.hasAttribute("data-placeholder")) {
-        activePlaceholder = target;
-        addForm.style.display = "block";
-      } else if (target && target.dataset.url) {
-        window.open(target.dataset.url, "_blank");
-      }
-    });
+    function showAddForm() {
+      playlistUrlInput.value = "";
+      playlistTitleInput.value = "";
+      playlistImageInput.value = "";
+      document.getElementById("form-title").textContent = activePlaylistIndex === null ? "Add Your Playlist" : "Edit Your Playlist";
+      addForm.style.display = "block";
+    }
 
     saveButton.addEventListener("click", () => {
       const playlistUrl = playlistUrlInput.value.trim();
       const playlistTitle = playlistTitleInput.value.trim();
       const playlistImageFile = playlistImageInput.files[0];
-
-      // Check if the number of playlists is already 10
-      if (savedPlaylists.length >= 10) {
-        alert("You can only add up to 10 playlists!");
-        return;
-      }
 
       if (!playlistUrl || !playlistTitle || !playlistImageFile) {
         alert("Please enter a playlist link, title, and select an image!");
@@ -175,23 +179,42 @@
           image: playlistImage,
         };
 
-        savedPlaylists.push(newPlaylist);
+        if (activePlaylistIndex !== null) {
+          // Edit existing playlist
+          savedPlaylists[activePlaylistIndex] = newPlaylist;
+        } else if (savedPlaylists.length < maxPlaylists) {
+          // Add new playlist
+          savedPlaylists.push(newPlaylist);
+        } else {
+          alert("Maximum number of playlists reached!");
+          return;
+        }
+
         localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
-
-        activePlaceholder.innerHTML = `
-          <img src="${playlistImage}" alt="${playlistTitle}">
-          <div class="playlist-title">${playlistTitle}</div>
-        `;
-        activePlaceholder.removeAttribute("data-placeholder");
-        activePlaceholder.setAttribute("data-url", playlistUrl);
-
         addForm.style.display = "none";
-        playlistUrlInput.value = "";
-        playlistTitleInput.value = "";
-        playlistImageInput.value = "";
+        loadCustomPlaylists();
       };
 
       reader.readAsDataURL(playlistImageFile);
+    });
+
+    function editPlaylist(index) {
+      activePlaylistIndex = index;
+      const playlist = savedPlaylists[index];
+      playlistUrlInput.value = playlist.url;
+      playlistTitleInput.value = playlist.title;
+      addForm.style.display = "block";
+    }
+
+    function deletePlaylist(index) {
+      savedPlaylists.splice(index, 1);
+      localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
+      loadCustomPlaylists();
+    }
+
+    addPlaylistButton.addEventListener("click", () => {
+      activePlaylistIndex = null;
+      showAddForm();
     });
 
     loadCustomPlaylists();
