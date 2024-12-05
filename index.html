@@ -150,53 +150,34 @@
     });
 
     saveButton.addEventListener("click", () => {
-  const playlistUrl = playlistUrlInput.value.trim();
-  const playlistTitle = playlistTitleInput.value.trim();
-  const playlistImageFile = playlistImageInput.files[0];
+      const playlistUrl = playlistUrlInput.value.trim();
+      const playlistTitle = playlistTitleInput.value.trim();
+      const playlistImageFile = playlistImageInput.files[0];
 
-  // Controlla se il numero di playlist è già 10
-  if (savedPlaylists.length >= 10) {
-    alert("You can only add up to 10 playlists!");
-    return;
-  }
+      // Check if the number of playlists is already 10
+      if (savedPlaylists.length >= 10) {
+        alert("You can only add up to 10 playlists!");
+        return;
+      }
 
-  if (!playlistUrl || !playlistTitle || !playlistImageFile) {
-    alert("Please enter a playlist link, title, and select an image!");
-    return;
-  }
+      if (!playlistUrl || !playlistTitle || !playlistImageFile) {
+        alert("Please enter a playlist link, title, and select an image!");
+        return;
+      }
 
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const playlistImage = event.target.result;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const playlistImage = event.target.result;
 
-    const newPlaylist = {
-      url: playlistUrl,
-      title: playlistTitle,
-      image: playlistImage,
-    };
+        const newPlaylist = {
+          url: playlistUrl,
+          title: playlistTitle,
+          image: playlistImage,
+        };
 
-    savedPlaylists.push(newPlaylist);
-    localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
+        savedPlaylists.push(newPlaylist);
+        localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
 
-    // Create a new playlist div dynamically
-    const newPlaylistDiv = document.createElement("div");
-    newPlaylistDiv.classList.add("playlist");
-    newPlaylistDiv.setAttribute("data-url", playlistUrl);
-    newPlaylistDiv.innerHTML = `
-      <img src="${playlistImage}" alt="${playlistTitle}">
-      <div class="playlist-title">${playlistTitle}</div>
-    `;
-    grid.appendChild(newPlaylistDiv);
-
-    // Reset the form
-    addForm.style.display = "none";
-    playlistUrlInput.value = "";
-    playlistTitleInput.value = "";
-    playlistImageInput.value = "";
-  };
-
-  reader.readAsDataURL(playlistImageFile);
-});
         activePlaceholder.innerHTML = `
           <img src="${playlistImage}" alt="${playlistTitle}">
           <div class="playlist-title">${playlistTitle}</div>
