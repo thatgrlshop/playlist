@@ -87,6 +87,13 @@
       border-radius: 5px;
       font-size: 14px;
     }
+    iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+      margin-top: 20px;
+      display: none; /* Hidden initially */
+    }
   </style>
 </head>
 <body>
@@ -97,6 +104,7 @@
   <div class="grid" id="playlist-grid">
     <!-- Placeholder for custom playlists -->
   </div>
+  <iframe id="spotify-iframe"></iframe>
 
   <!-- Add/Edit Playlist Form -->
   <div class="form-container" id="add-playlist-form">
@@ -109,6 +117,7 @@
 
   <script>
     const grid = document.getElementById("playlist-grid");
+    const iframe = document.getElementById("spotify-iframe");
     const addForm = document.getElementById("add-playlist-form");
     const playlistUrlInput = document.getElementById("playlist-url");
     const playlistTitleInput = document.getElementById("playlist-title");
@@ -128,37 +137,38 @@
         playlistDiv.classList.add("playlist");
         playlistDiv.setAttribute("data-url", playlist.url);
         playlistDiv.innerHTML = `
-          <img src="${playlist.image}" alt="${playlist.title}">
+          <img src="${playlist.image}" alt="${playlist.title}" onclick="openPlaylist('${playlist.url}')">
           <div class="playlist-title">${playlist.title}</div>
           <div class="playlist-buttons">
             <button onclick="editPlaylist(${index})">Edit</button>
             <button onclick="deletePlaylist(${index})">Delete</button>
           </div>
         `;
-        playlistDiv.addEventListener("click", (e) => {
-          if (!editMode) {
-            window.open(playlist.url, "_blank");
-          }
-        });
         grid.appendChild(playlistDiv);
       });
 
       if (savedPlaylists.length < maxPlaylists) {
-  // Add a placeholder if less than max playlists
-  const placeholder = document.createElement("div");
-  placeholder.classList.add("playlist");
-  placeholder.innerHTML = `
-    <div style="width: 150px; height: 150px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #A17E89;">
-      +
-    </div>
-    <div class="playlist-title">Add Your Playlist</div>
-  `;
-  placeholder.addEventListener("click", () => {
-    activePlaylistIndex = null; // New playlist
-    showAddForm();
-  });
-  grid.appendChild(placeholder);
-}
+        const placeholder = document.createElement("div");
+        placeholder.classList.add("playlist");
+        placeholder.innerHTML = `
+          <div style="width: 150px; height: 150px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #A17E89;">
+            +
+          </div>
+          <div class="playlist-title">Add Your Playlist</div>
+        `;
+        placeholder.addEventListener("click", () => {
+          activePlaylistIndex = null;
+          showAddForm();
+        });
+        grid.appendChild(placeholder);
+      }
+    }
+
+    function openPlaylist(url) {
+      if (!editMode) {
+        iframe.style.display = "block";
+        iframe.src = `https://open.spotify.com/embed/playlist/${url.split("/playlist/")[1].split("?")[0]}`;
+      }
     }
 
     function showAddForm() {
@@ -221,7 +231,7 @@
     }
 
     editModeButton.addEventListener("click", () => {
-      editMode = !editMode; // Toggle edit mode
+      editMode = !editMode;
       const playlists = document.querySelectorAll(".playlist");
       playlists.forEach((playlist) => {
         if (editMode) {
