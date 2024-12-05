@@ -116,133 +116,148 @@
   </div>
 
   <script>
-    const grid = document.getElementById("playlist-grid");
-    const iframe = document.getElementById("spotify-iframe");
-    const addForm = document.getElementById("add-playlist-form");
-    const playlistUrlInput = document.getElementById("playlist-url");
-    const playlistTitleInput = document.getElementById("playlist-title");
-    const playlistImageInput = document.getElementById("playlist-image");
-    const saveButton = document.getElementById("save-playlist");
-    const editModeButton = document.getElementById("edit-mode-button");
-    let activePlaylistIndex = null;
-    const maxPlaylists = 10;
-    let editMode = false; // Tracks if edit mode is active
+  const grid = document.getElementById("playlist-grid");
+  const addForm = document.getElementById("add-playlist-form");
+  const playlistUrlInput = document.getElementById("playlist-url");
+  const playlistTitleInput = document.getElementById("playlist-title");
+  const playlistImageInput = document.getElementById("playlist-image");
+  const saveButton = document.getElementById("save-playlist");
+  const editModeButton = document.getElementById("edit-mode-button");
+  let activePlaylistIndex = null;
+  const maxPlaylists = 10;
+  let editMode = false;
 
-    const savedPlaylists = JSON.parse(localStorage.getItem("customPlaylists")) || [];
+  const iframe = document.createElement("iframe");
+  iframe.id = "spotify-iframe";
+  iframe.style.display = "none";
+  iframe.style.width = "100%";
+  iframe.style.height = "80px";
+  iframe.style.border = "none";
+  document.body.appendChild(iframe);
 
-    function loadCustomPlaylists() {
-      grid.innerHTML = ""; // Clear the grid
-      savedPlaylists.forEach((playlist, index) => {
-        const playlistDiv = document.createElement("div");
-        playlistDiv.classList.add("playlist");
-        playlistDiv.setAttribute("data-url", playlist.url);
-        playlistDiv.innerHTML = `
-          <img src="${playlist.image}" alt="${playlist.title}" onclick="openPlaylist('${playlist.url}')">
-          <div class="playlist-title">${playlist.title}</div>
-          <div class="playlist-buttons">
-            <button onclick="editPlaylist(${index})">Edit</button>
-            <button onclick="deletePlaylist(${index})">Delete</button>
-          </div>
-        `;
-        grid.appendChild(playlistDiv);
+  const savedPlaylists = JSON.parse(localStorage.getItem("customPlaylists")) || [];
+
+  function loadCustomPlaylists() {
+    grid.innerHTML = "";
+    savedPlaylists.forEach((playlist, index) => {
+      const playlistDiv = document.createElement("div");
+      playlistDiv.classList.add("playlist");
+      playlistDiv.setAttribute("data-url", playlist.url);
+      playlistDiv.innerHTML = `
+        <img src="${playlist.image}" alt="${playlist.title}">
+        <div class="playlist-title">${playlist.title}</div>
+        <div class="playlist-buttons">
+          <button onclick="editPlaylist(${index})">Edit</button>
+          <button onclick="deletePlaylist(${index})">Delete</button>
+        </div>
+      `;
+      playlistDiv.addEventListener("click", (e) => {
+        if (!editMode) openPlaylist(playlist.url);
       });
+      grid.appendChild(playlistDiv);
+    });
 
-      if (savedPlaylists.length < maxPlaylists) {
-        const placeholder = document.createElement("div");
-        placeholder.classList.add("playlist");
-        placeholder.innerHTML = `
-          <div style="width: 150px; height: 150px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #A17E89;">
-            +
-          </div>
-          <div class="playlist-title">Add Your Playlist</div>
-        `;
-        placeholder.addEventListener("click", () => {
-          activePlaylistIndex = null;
-          showAddForm();
-        });
-        grid.appendChild(placeholder);
-      }
+    if (savedPlaylists.length < maxPlaylists) {
+      const placeholder = document.createElement("div");
+      placeholder.classList.add("playlist");
+      placeholder.innerHTML = `
+        <div style="width: 150px; height: 150px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #A17E89;">
+          +
+        </div>
+        <div class="playlist-title">Add Your Playlist</div>
+      `;
+      placeholder.addEventListener("click", () => {
+        activePlaylistIndex = null;
+        showAddForm();
+      });
+      grid.appendChild(placeholder);
     }
+  }
 
-    function openPlaylist(url) {
-      if (!editMode) {
+  function openPlaylist(url) {
+    if (!editMode) {
+      if (iframe.style.display === "block" && iframe.src.includes(url.split("/playlist/")[1].split("?")[0])) {
+        iframe.style.display = "none";
+        iframe.src = ""; // Reset iframe source
+      } else {
         iframe.style.display = "block";
         iframe.src = `https://open.spotify.com/embed/playlist/${url.split("/playlist/")[1].split("?")[0]}`;
       }
     }
+  }
 
-    function showAddForm() {
-      playlistUrlInput.value = "";
-      playlistTitleInput.value = "";
-      playlistImageInput.value = "";
-      document.getElementById("form-title").textContent = activePlaylistIndex === null ? "Add Your Playlist" : "Edit Your Playlist";
-      addForm.style.display = "block";
+  function showAddForm() {
+    playlistUrlInput.value = "";
+    playlistTitleInput.value = "";
+    playlistImageInput.value = "";
+    document.getElementById("form-title").textContent = activePlaylistIndex === null ? "Add Your Playlist" : "Edit Your Playlist";
+    addForm.style.display = "block";
+  }
+
+  saveButton.addEventListener("click", () => {
+    const playlistUrl = playlistUrlInput.value.trim();
+    const playlistTitle = playlistTitleInput.value.trim();
+    const playlistImageFile = playlistImageInput.files[0];
+
+    if (!playlistUrl || !playlistTitle || !playlistImageFile) {
+      alert("Please enter a playlist link, title, and select an image!");
+      return;
     }
 
-    saveButton.addEventListener("click", () => {
-      const playlistUrl = playlistUrlInput.value.trim();
-      const playlistTitle = playlistTitleInput.value.trim();
-      const playlistImageFile = playlistImageInput.files[0];
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const playlistImage = event.target.result;
 
-      if (!playlistUrl || !playlistTitle || !playlistImageFile) {
-        alert("Please enter a playlist link, title, and select an image!");
+      const newPlaylist = {
+        url: playlistUrl,
+        title: playlistTitle,
+        image: playlistImage,
+      };
+
+      if (activePlaylistIndex !== null) {
+        savedPlaylists[activePlaylistIndex] = newPlaylist;
+      } else if (savedPlaylists.length < maxPlaylists) {
+        savedPlaylists.push(newPlaylist);
+      } else {
+        alert("Maximum number of playlists reached!");
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const playlistImage = event.target.result;
-
-        const newPlaylist = {
-          url: playlistUrl,
-          title: playlistTitle,
-          image: playlistImage,
-        };
-
-        if (activePlaylistIndex !== null) {
-          savedPlaylists[activePlaylistIndex] = newPlaylist;
-        } else if (savedPlaylists.length < maxPlaylists) {
-          savedPlaylists.push(newPlaylist);
-        } else {
-          alert("Maximum number of playlists reached!");
-          return;
-        }
-
-        localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
-        addForm.style.display = "none";
-        loadCustomPlaylists();
-      };
-
-      reader.readAsDataURL(playlistImageFile);
-    });
-
-    function editPlaylist(index) {
-      activePlaylistIndex = index;
-      const playlist = savedPlaylists[index];
-      playlistUrlInput.value = playlist.url;
-      playlistTitleInput.value = playlist.title;
-      addForm.style.display = "block";
-    }
-
-    function deletePlaylist(index) {
-      savedPlaylists.splice(index, 1);
       localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
+      addForm.style.display = "none";
       loadCustomPlaylists();
-    }
+    };
 
-    editModeButton.addEventListener("click", () => {
-      editMode = !editMode;
-      const playlists = document.querySelectorAll(".playlist");
-      playlists.forEach((playlist) => {
-        if (editMode) {
-          playlist.classList.add("edit-mode");
-        } else {
-          playlist.classList.remove("edit-mode");
-        }
-      });
-    });
+    reader.readAsDataURL(playlistImageFile);
+  });
 
+  function editPlaylist(index) {
+    activePlaylistIndex = index;
+    const playlist = savedPlaylists[index];
+    playlistUrlInput.value = playlist.url;
+    playlistTitleInput.value = playlist.title;
+    addForm.style.display = "block";
+  }
+
+  function deletePlaylist(index) {
+    savedPlaylists.splice(index, 1);
+    localStorage.setItem("customPlaylists", JSON.stringify(savedPlaylists));
     loadCustomPlaylists();
-  </script>
+  }
+
+  editModeButton.addEventListener("click", () => {
+    editMode = !editMode;
+    const playlists = document.querySelectorAll(".playlist");
+    playlists.forEach((playlist) => {
+      if (editMode) {
+        playlist.classList.add("edit-mode");
+      } else {
+        playlist.classList.remove("edit-mode");
+      }
+    });
+  });
+
+  loadCustomPlaylists();
+</script>
 </body>
 </html>
