@@ -144,18 +144,21 @@
       });
 
       if (savedPlaylists.length < maxPlaylists) {
-        const placeholder = document.createElement("div");
-        placeholder.classList.add("playlist");
-        placeholder.innerHTML = `
-          <img src="https://via.placeholder.com/150" alt="Add playlist">
-          <div class="playlist-title">Add Your Playlist</div>
-        `;
-        placeholder.addEventListener("click", () => {
-          activePlaylistIndex = null;
-          showAddForm();
-        });
-        grid.appendChild(placeholder);
-      }
+  // Add a placeholder if less than max playlists
+  const placeholder = document.createElement("div");
+  placeholder.classList.add("playlist");
+  placeholder.innerHTML = `
+    <div style="width: 150px; height: 150px; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #A17E89;">
+      +
+    </div>
+    <div class="playlist-title">Add Your Playlist</div>
+  `;
+  placeholder.addEventListener("click", () => {
+    activePlaylistIndex = null; // New playlist
+    showAddForm();
+  });
+  grid.appendChild(placeholder);
+}
     }
 
     function showAddForm() {
